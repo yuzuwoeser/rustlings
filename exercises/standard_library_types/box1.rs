@@ -16,16 +16,47 @@
 //
 // Execute `rustlings hint box1` or use the `hint` watch subcommand for a hint.
 
-// I AM NOT DONE
-
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum List {
-    Cons(i32, List),
+    Cons(i32, Box<List>),
     Nil,
+}
+
+use List::{Cons, Nil};
+
+impl List {
+
+    fn new() -> List {
+        List::Nil
+    }
+
+    fn from(n: i32, list: List) -> List {
+        Cons(n, Box::new(list))
+    }
+
+    fn next(&self) -> Option<&List> {
+        match self {
+            Nil => None,
+            Cons(_, n) => Some(&n),
+        }
+    }
+
+    fn tail(&self) -> Option<&List> {
+        let mut tail = self;
+        while let Some(next) = tail.next() {
+            tail = next
+        }
+        Some(&tail)
+    }
+
+    fn prepend(&mut self, n: i32) {
+        *self = List::from(n, self.clone());
+    }
 }
 
 fn main() {
     println!("This is an empty cons list: {:?}", create_empty_list());
+    println!("List with 1 element: {:?}", List::from(3, Nil));
     println!(
         "This is a non-empty cons list: {:?}",
         create_non_empty_list()
@@ -33,11 +64,15 @@ fn main() {
 }
 
 pub fn create_empty_list() -> List {
-    todo!()
+    List::new()
 }
 
 pub fn create_non_empty_list() -> List {
-    todo!()
+    let mut l = List::from(3, Nil);
+    l.prepend(2);
+    l.prepend(1);
+    l.prepend(0);
+    l
 }
 
 #[cfg(test)]
@@ -47,6 +82,30 @@ mod tests {
     #[test]
     fn test_create_empty_list() {
         assert_eq!(List::Nil, create_empty_list())
+    }
+
+    #[test]
+    fn test_create_list() {
+        assert_eq!("Cons(3, Nil)", format!("{:?}", List::from(3, Nil)))
+    }
+
+    #[test]
+    fn test_get_next_or_tail() {
+        assert_eq!("Some(Nil)", format!("{:?}", List::from(3, Nil).next()));
+        assert_eq!("None", format!("{:?}", List::new().next()));
+        assert_eq!("Some(Cons(2, Nil))", format!("{:?}", List::Cons(1, Box::new(List::Cons(2, Box::new(Nil)))).next()));
+        assert_eq!("Some(Nil)", format!("{:?}", List::Cons(1, Box::new(List::Cons(2, Box::new(Nil)))).tail()));
+    }
+
+    #[test]
+    fn test_build_list() {
+        let mut l = List::from(2, Nil);
+        l.prepend(1);
+        assert_eq!("Some(Cons(2, Nil))", format!("{:?}", l.next()));
+        assert_eq!("Some(Nil)", format!("{:?}", l.tail()));
+        l.prepend(0);
+        assert_eq!("Some(Cons(2, Nil))", format!("{:?}", l.next().unwrap().next()));
+        assert_eq!("Some(Nil)", format!("{:?}", l.tail()));
     }
 
     #[test]
